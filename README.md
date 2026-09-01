@@ -9,13 +9,27 @@ The PayPal Agent toolkit provides the following tools:
 
 **Invoices**
 
-- `create_invoice`: Create a new invoice in the PayPal system
+- `create_invoice`: Create a new invoice in the PayPal system, including recipient billing details, line items, an invoice note, a custom color theme, an optional shipping cost, and an option to enable PAY_BY_BANK as a payment method
 - `list_invoices`: List invoices with optional pagination and filtering
 - `get_invoice`: Retrieve details of a specific invoice
 - `send_invoice`: Send an invoice to recipients
 - `send_invoice_reminder`: Send a reminder for an existing invoice
 - `cancel_sent_invoice`: Cancel a sent invoice
 - `generate_invoice_qr_code`: Generate a QR code for an invoice
+- `delete_invoice`: Permanently delete a draft or scheduled invoice
+- `generate_invoice_number`: Generate the next invoice number available to the merchant
+- `search_invoicing`: Search for invoices or recurring invoice series
+- `update_invoicing`: Update an existing invoice or recurring invoice series (full-replacement)
+- `cancel_invoice_auto_reminder`: Cancel all scheduled automatic reminders for an invoice
+- `record_payment_for_invoice`: Record an external or manual payment against an invoice
+- `record_refund_for_invoice`: Record a refund against an invoice
+- `create_conditional_rules_for_invoice`: Create conditional rules for an invoice, such as an early payment discount or automatic cancellation date
+
+- `create_recurring_series`: Create a recurring invoice series that automatically generates and sends invoices on a schedule
+- `activate_recurring_series`: Activate a draft recurring invoice series
+- `get_recurring_series`: Retrieve details of a specific recurring invoice series
+- `cancel_recurring_series`: Cancel an active recurring invoice series
+- `delete_recurring_series`: Delete a draft recurring invoice series
 
 **Payments**
 
@@ -90,11 +104,20 @@ const paypalToolkit = new PayPalAgentToolkit({
     actions: {
       invoices: {
         create: true,
+        createRecurringSeries: true,
         list: true,
         send: true,
         sendReminder: true,
         cancel: true,
+        delete: true,
         generateQRC: true,
+        generateInvoiceNumber: true,
+        search: true,
+        update: true,
+        cancelReminders: true,
+        recordPayment: true,
+        recordRefund: true,
+        createConditionalRules: true,
       },
       products: { create: true, list: true, update: true },
       subscriptionPlans: { create: true, list: true, show: true },
@@ -142,103 +165,6 @@ const { text: response } = await generateText({
 });
 
 ```
-
-## PayPal Model Context Protocol
-
-The PayPal [Model Context Protocol](https://modelcontextprotocol.com/) server allows you to integrate with PayPal APIs through function calling. This protocol supports various tools to interact with different PayPal services.
-
-### Running MCP Inspector
-
-To run the PayPal MCP server using npx, use the following command:
-
-```bash
-npx -y @paypal/mcp --tools=all PAYPAL_ACCESS_TOKEN="YOUR_ACCESS_TOKEN" PAYPAL_ENVIRONMENT="SANDBOX"
-```
-
-Replace `YOUR_ACCESS_TOKEN` with active access token generated using these steps: [PayPal access token](#generating-an-access-token). Alternatively, you could set the PAYPAL_ACCESS_TOKEN in your environment variables.
-
-### Custom MCP Server
-You can set up your own MCP server. For example:
-
-```typescript
-import { PayPalAgentToolkit } from “@paypal/agent-toolkit/modelcontextprotocol";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-
-const orderSummary = await paypalWorkflows.generateOrder(
-  llm,
-  transactionInfo,
-  merchantInfo,
-);
-
-const server = new PayPalAgentToolkit({
-	accessToken: process.env.PAYPAL_ACCESS_TOKEN
-});
-
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("PayPal MCP Server running on stdio");
-}
-
-main().catch((error) => {
-  console.error("Fatal error in main():", error);
-  process.exit(1);
-});
-```
-
-### Usage with MCP host (Claude Desktop/Cline/Cursor/Github Co-Pilot)
-
-This guide explains how to integrate the PayPal connector with Claude Desktop.
-
-## Prerequisites
-- Claude Desktop application installed
-- installing Node.js locally
-
-## Installation Steps
-
-### 1. Install Node.js
-
-Node.js is required for the PayPal connector to function:
-
-1. Visit the [Node.js official website](https://nodejs.org/), download and install it.
-2. Requirements: Node 18+
-
-### 2. Configure PayPal Connector with MCP host (Claude desktop / Cursor / Cline)
-We will show the integration with Claude desktop. You can use your favorite MCP host.
-1. Open Claude Desktop
-2. Navigate to Settings
-3. Find the Developer or Advanced settings section
-4. Locate the external tools or connectors configuration area
-5. Add the following PayPal connector configuration to this ~/Claude/claude_desktop_config.json:
-
-```json
-{
-   "mcpServers": {
-     "paypal": {
-       "command": "npx",
-       "args": [
-         "-y",
-         "@paypal/mcp",
-         "--tools=all"
-       ],
-       "env": {
-         "PAYPAL_ACCESS_TOKEN": "YOUR_PAYPAL_ACCESS_TOKEN",
-         "PAYPAL_ENVIRONMENT": "SANDBOX"
-       }
-     }
-   }
-}
-```
-Make sure to replace `YOUR_PAYPAL_ACCESS_TOKEN` with your actual PayPal Access Token. Alternatively, you could set the PAYPAL_ACCESS_TOKEN as an environment variable. You can also pass it as an argument using --access-token in "args"
-Set `PAYPAL_ENVIRONMENT` value as either `SANDBOX` for stage testing and `PRODUCTION` for production environment.
-
-6. Save your configuration changes
-
-### 3. Test the Integration
-
-1. Quit and restart Claude Desktop to apply changes
-2. Test the connection by asking Claude to perform a PayPal-related task
-   - Example: \"List my PayPal invoices\"
 
 ## Environment Variables
 

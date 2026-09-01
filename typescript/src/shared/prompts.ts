@@ -5,7 +5,49 @@ import type { Context } from './configuration';
 export const createInvoicePrompt = (context: Context) => `
 Create Invoices on PayPal.
 
-This function is used to create an invoice in the PayPal system. It allows you to generate a new invoice, specifying details such as customer information, items, quantities, pricing, and tax information. Once created, an invoice can be sent to the customer for payment.
+This function creates a draft invoice, specifying a currency code, the invoicer's business information, one or more recipients to bill, and line items. Once created, the invoice can be sent to the customer for payment.
+
+primary_recipients and items use PayPal's real nested shape (billing_info/shipping_info for recipients; unit_amount/tax/discount for items); other fields use a simplified flat shape.
+`;
+
+export const createRecurringSeriesPrompt = (context: Context) => `
+Create a recurring invoice series on PayPal.
+
+This function creates a recurring invoice series that automatically generates and sends invoices to a customer on a schedule, specifying a billing frequency, a start date, a currency code, a primary recipient, and line items for the series template.
+
+primary_recipients and items use PayPal's real nested shape (billing_info/shipping_info for recipients; unit_amount/tax/discount for items); other fields use a simplified flat shape.
+
+A newly created series is in DRAFT status and will not generate invoices until activated -- call activate_recurring_series with the returned series ID to activate it.
+`;
+
+export const updateInvoicingPrompt = (context: Context) => `
+Update an existing invoice or recurring invoice series on PayPal.
+
+For invoices, the recipient (primary_recipients) can only be changed 2 times within any 72-hour window -- avoid unnecessary recipient edits.
+`;
+
+export const activateRecurringSeriesPrompt = (context: Context) => `
+Activate a recurring invoice series on PayPal.
+
+This function activates a recurring invoice series by its ID, moving it out of DRAFT status. Once activated, PayPal automatically generates and sends invoices to the customer based on the series' configured schedule. Call this after create_recurring_series to make the series active.
+`;
+
+export const getRecurringSeriesPrompt = (context: Context) => `
+Get a recurring invoice series from PayPal.
+
+This function retrieves details of a specific recurring invoice series using its ID, including its schedule, status, template, and recipient information.
+`;
+
+export const cancelRecurringSeriesPrompt = (context: Context) => `
+Cancel a recurring invoice series on PayPal.
+
+This function cancels a recurring invoice series by its ID. Once cancelled, PayPal stops generating and sending further invoices for the series. This action cannot be undone.
+`;
+
+export const deleteRecurringSeriesPrompt = (context: Context) => `
+Delete a recurring invoice series on PayPal.
+
+This function permanently deletes a recurring invoice series by its ID. Only series in DRAFT status can be deleted -- for a series that has already been activated, use cancel_recurring_series instead. This action cannot be undone.
 `;
 
 export const listInvoicesPrompt = (context: Context) => `
@@ -38,10 +80,66 @@ Cancel a sent invoice.
 This function cancels an invoice that has already been sent to the recipient(s).
 `;
 
+export const deleteInvoicePrompt = (context: Context) => `
+Delete a draft or scheduled invoice on PayPal.
+
+This function permanently deletes an invoice that is in the draft or scheduled state, by ID. It does not work on invoices that have already been sent -- use cancel_sent_invoice for those instead. After deletion, the invoice's details can no longer be retrieved, but its invoice number can be reused.
+`;
+
+export const setupInvoiceAutoReminderPrompt = (context: Context) => `
+Initialize the invoice auto reminder configuration for the merchant's PayPal account.
+
+This function sets up automatic reminders for unpaid invoices, for BEFORE_DUE and/or AFTER_DUE reminder types.
+`;
+
+export const updateInvoiceAutoReminderPrompt = (context: Context) => `
+Update an existing invoice auto reminder configuration by its configuration ID.
+
+This function performs a full update of the reminder configuration's timing interval, repetition count and notification preferences.
+`;
+
+export const searchInvoicingPrompt = (context: Context) => `
+Search for invoices or recurring invoice series on PayPal.
+
+Use resource_type "invoice" with invoice_filters, or "recurring_series" with recurring_series_filters -- only set the matching filters object. Recurring series search covers only the past 3 years.
+`;
+
+export const cancelInvoiceAutoReminderPrompt = (context: Context) => `
+Cancel all scheduled automatic reminders for an invoice.
+
+This function permanently cancels every automatic reminder scheduled for a specific invoice, by invoice ID. This action is irreversible -- once cancelled, automatic reminders cannot be re-enabled for that invoice.
+`;
+
 export const generateInvoiceQrCodePrompt = (context: Context) => `
 Generate a QR code for an invoice.
 
 This function generates a QR code for an invoice, which can be used to pay the invoice using a mobile device or scanning app.
+`;
+
+export const generateInvoiceNumberPrompt = (context: Context) => `
+Generate the next invoice number available to the merchant.
+
+This function generates the next invoice number by using the prefix and suffix from the merchant's last invoice number and incrementing the numeric portion by one (e.g. INVOICE-1234 -> INVOICE-1235).
+`;
+
+export const recordPaymentForInvoicePrompt = (context: Context) => `
+Record a payment for an invoice on PayPal.
+
+This function records an external or manual payment (for example, cash, check, bank transfer, or a PayPal transaction) against an invoice, by invoice ID. If the recorded amount covers the full amount due, PayPal marks the invoice PAID; otherwise it is marked PARTIALLY_PAID. This does not process a new payment -- it only logs one that was already collected.
+
+method is required. payment_id applies only to PAYPAL-type payments.
+`;
+
+export const recordRefundForInvoicePrompt = (context: Context) => `
+Record a refund for an invoice on PayPal.
+
+This function records a refund against an invoice, by invoice ID. If all payments made against the invoice are refunded, PayPal marks the invoice REFUNDED; otherwise it is marked PARTIALLY_REFUNDED. This does not process a new refund -- it only logs one that was already issued.
+
+method is required.
+`;
+
+export const createConditionalRulesForInvoicePrompt = (context: Context) => `
+Create conditional rules for an invoice on PayPal.
 `;
 
 export const createProductPrompt = (context: Context) => `
